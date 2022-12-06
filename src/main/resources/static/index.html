@@ -31,6 +31,7 @@
             <td>Название</td>
             <td>Цена</td>
             <td>Удаление товара</td>
+            <td>Добавить в корзину</td>
         </tr>
     <!--тело  -->
         <tbody>
@@ -40,7 +41,10 @@
             <td>{{p.title}}</td>
             <td>{{p.cost}}</td>
             <td>
-                <button class="btn btn-danger" ng-click="deleteProductById(p.id)">Удалить</button>
+                <button class="btn btn-danger" ng-click="deleteProductById(p.id)">Удалить товар</button>
+            </td>
+            <td>
+                <button class="btn btn-success" ng-click="addToSingleToneCartList(p.id, p.title, p.cost)">Добавить в singleton корзину</button>
             </td>
         </tr>
         </tbody>
@@ -80,6 +84,32 @@
         <button class="btn btn-secondary"  ng-click="change_page(- 1)" >Предыдущая страница </button>
         <button class="btn btn-primary" ng-click="change_page(1)" >Следующая страница</button>
     </div>
+    <br>
+
+    <h4>Корзина------------------------------------------------------------</h4>
+    <!--таблица для singletonCart-->
+    <table class ="table table-hover" cellpadding="0" cellspacing="0">
+        <!--заголовки -->
+        <tr>
+            <td>id</td>
+            <td>Название</td>
+            <td>Цена</td>
+            <td>Удаление из корзины</td>
+        </tr>
+        <!--тело  -->
+        <tbody>
+        <!--for-each-->
+        <tr ng-repeat="s in SingletoneCartList">
+            <td>{{s.id}}</td>
+            <td>{{s.title}}</td>
+            <td>{{s.cost}}</td>
+            <td>
+                <button class="btn btn-danger" ng-click="deleteFromSingleToneCart(s.id)">Удалить из корзины / {{s.id}}</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
 
 </div>
 </body>
