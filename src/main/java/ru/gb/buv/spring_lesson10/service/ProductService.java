@@ -1,7 +1,9 @@
 
 package ru.gb.buv.spring_lesson10.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
@@ -10,18 +12,25 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.gb.buv.spring_lesson10.dto.ProductDto;
+import ru.gb.buv.spring_lesson10.exceptions.ResourceNotFoundException;
 import ru.gb.buv.spring_lesson10.repository.ProductRepository;
 import ru.gb.buv.spring_lesson10.entity.Product;
 import ru.gb.buv.spring_lesson10.repository.specification.ProductSpecification;
+import ru.gb.buv.spring_lesson10.singleton_cart.SingletonCart;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class ProductService {
-    @Autowired
-    private ProductRepository productRepository;
+    private final ProductRepository productRepository;
+
 
     //*****************************************
     //find Page method!!!
-    public Page<Product> find(Long minCost, Long maxCost, String titlePart, Integer page){
+    public Page<Product> getProducts(Long minCost, Long maxCost, String titlePart, Integer page){
         Specification<Product> spec = Specification.where(null);
         if(minCost != null){
             spec = spec.and(ProductSpecification.costGreaterOrEqualsThan(minCost));
@@ -34,15 +43,15 @@ public class ProductService {
         }
         return (productRepository.findAll(spec,PageRequest.of(page -1,5)))/*.stream().toList()*/;
     }
-    public Product getProductById(Long id) {
-        return productRepository.findById(id).get();
+    //*****************************************
+    public Optional<Product> getProductById(Long id) {
+        return productRepository.findById(id);
     }
 
-    public Product createProduct(String title, Long cost,String secret_field){
+    public Product createProduct(String title, Long cost){
         Product product = new Product();
         product.setTitle(title);
         product.setCost(cost);
-        product.setSecret_field(secret_field);
         return product;
     }
 
@@ -54,20 +63,35 @@ public class ProductService {
     }
 
     public Page<Product> getPage(Integer offset, Integer limit) {
-        return productRepository.findAll(PageRequest.of(offset, limit, Sort.by(Sort.Direction.ASC, "id")));
+        return productRepository
+                .findAll(PageRequest.of(offset, limit, Sort.by(Sort.Direction.ASC, "id")));
 
     }
-
-    //*********Код начальной инициализации***********
+    //Updates method
     @Transactional
-    @EventListener(ApplicationReadyEvent.class)
-    private void fillDataBaseAfterStartApplication(){
-        for (int i = 0; i < 100; i++) {
-            productRepository.save(createProduct("prod-"+i,(100L+i+i),"secret_field"));
-        }
+    public Product update(ProductDto productDto){
+        Product product = productRepository.findById(productDto.getId())
+                .orElseThrow(()-> new ResourceNotFoundException("Невозможно найти данный объект id: "+ productDto.getId()));
+        product.setTitle(productDto.getTitle());
+        product.setCost(productDto.getCost());
+        return product;
     }
+
     //Save method
     public void saveProduct(Product product){
         productRepository.save(product);
     }
+
+    //*********Код начальной инициализации***********
+
+    @Transactional
+    @EventListener(ApplicationReadyEvent.class)
+    protected void fillDataBaseAfterStartApplication(){
+        for (int i = 0; i < 100; i++) {
+            saveProduct(createProduct("prod-"+i,100L+i*2));
+        }
+    }
+    //***********************************************
+
+
 }
